@@ -3,9 +3,12 @@ package uk.gov.bis.taxserviceMock.mongo
 import javax.inject.Inject
 
 import play.api.Logger
-import play.api.libs.json.Json
+import reactivemongo.api.bson._
 import play.modules.reactivemongo.ReactiveMongoApi
 import uk.gov.bis.taxserviceMock.data.{AuthCodeOps, AuthCodeRow}
+import play.api.libs.json._
+import reactivemongo.play.json.compat._
+import json2bson._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -23,14 +26,14 @@ class AuthCodeMongo @Inject()(val mongodb: ReactiveMongoApi) extends MongoCollec
     val row = AuthCodeRow(code, gatewayUserId, redirectUri, System.currentTimeMillis(), Some("read:apprenticeship-levy"), Some(clientId), 3600)
     for {
       coll <- collectionF
-      i <- coll.insert(row)
+      i <- coll.insert(ordered = false).one(row)
     } yield i.n
   }
 
   override def insert(authCode: AuthCodeRow)(implicit ec: ExecutionContext): Future[Int] = {
     for {
       coll <- collectionF
-      i <- coll.insert(authCode)
+      i <- coll.insert(ordered = false).one(authCode)
     } yield i.n
   }
 }

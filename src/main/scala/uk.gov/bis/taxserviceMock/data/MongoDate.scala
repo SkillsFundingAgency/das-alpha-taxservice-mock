@@ -1,7 +1,8 @@
 package uk.gov.bis.taxserviceMock.data
-
+import reactivemongo.api.bson._
 import org.joda.time.format.ISODateTimeFormat
-import play.api.libs.json.Json
+import play.api.libs.json._
+import reactivemongo.play.json.compat._
 
 case class MongoDate(`$date`: String) {
   def longValue: Long = this
