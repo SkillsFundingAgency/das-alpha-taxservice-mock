@@ -9,6 +9,7 @@ import uk.gov.bis.taxserviceMock.data.{AuthCodeOps, AuthCodeRow}
 import play.api.libs.json._
 import reactivemongo.play.json.compat._
 import json2bson._
+import org.joda.time.{DateTime}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -23,7 +24,7 @@ class AuthCodeMongo @Inject()(val mongodb: ReactiveMongoApi) extends MongoCollec
 
   override def create(code: String, gatewayUserId: String, redirectUri: String, clientId: String, scope: String)(implicit ec: ExecutionContext): Future[Int] = {
     Logger.debug("create auth code entry")
-    val row = AuthCodeRow(code, gatewayUserId, redirectUri, System.currentTimeMillis(), Some("read:apprenticeship-levy"), Some(clientId), 3600)
+    val row = AuthCodeRow(code, gatewayUserId, redirectUri, new DateTime(), Some("read:apprenticeship-levy"), Some(clientId), 3600)
     for {
       coll <- collectionF
       i <- coll.insert(ordered = false).one(row)

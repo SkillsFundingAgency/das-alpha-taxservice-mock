@@ -8,6 +8,7 @@ import play.api.mvc.Controller
 import uk.gov.bis.taxserviceMock.actions.GatewayUserAction
 import uk.gov.bis.taxserviceMock.data.{AuthCodeOps, AuthCodeRow, AuthRequestOps, ScopeOps}
 import views.html.helper
+import org.joda.time.{DateTime}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,7 +50,7 @@ class GrantScopeController @Inject()(UserAction: GatewayUserAction, auths: AuthR
       case None       => Future.successful(BadRequest)
       case Some(auth) =>
         val token = generateToken
-        val authCode = AuthCodeRow(token, request.user.gatewayID, "", System.currentTimeMillis(), Some(auth.scope), Some(auth.clientId), 4 * 60 * 60)
+        val authCode = AuthCodeRow(token, request.user.gatewayID, "", new DateTime(), Some(auth.scope), Some(auth.clientId), 4 * 60 * 60)
         authCodes.insert(authCode).map { _ =>
           val uri = auth.state match {
             case Some(s) => s"${auth.redirectUri}?code=${authCode.authorizationCode}&state=${helper.urlEncode(s)}"

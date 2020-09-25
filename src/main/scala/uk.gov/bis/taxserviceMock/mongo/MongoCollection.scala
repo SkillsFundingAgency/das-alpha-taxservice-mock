@@ -19,9 +19,7 @@ trait MongoCollection[T] {
   def collectionF(implicit ec: ExecutionContext): Future[BSONCollection] = mongodb.database.map(_.collection[BSONCollection](collectionName))
 
   def findOne(params: (String, JsValueWrapper)*)(implicit ec: ExecutionContext, Reads: Format[T]): Future[Option[T]] = {
-    println("Finding One")
     val selector = Json.obj(params: _*)
-    println(selector)
     val of = for {
       collection <- collectionF
       o <- collection.find(selector).cursor[JsObject]().collect[List](1, Cursor.FailOnError[List[JsObject]]()).map(_.headOption)
@@ -29,14 +27,8 @@ trait MongoCollection[T] {
 
     of.map {
       case Some(o) => o.validate[T] match {
-        case JsSuccess(resp, _) => {
-          println(resp)
-          Some(resp)
-        }
-        case JsError(errs) => { 
-          println(errs)
-          None
-        }
+        case JsSuccess(resp, _) => Some(resp)
+        case JsError(errs) => None
       }
       case _ => None
     }
