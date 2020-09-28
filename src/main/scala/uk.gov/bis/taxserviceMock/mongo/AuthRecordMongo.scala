@@ -2,10 +2,12 @@ package uk.gov.bis.taxserviceMock.mongo
 
 import javax.inject._
 
-import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.play.json._
 import uk.gov.bis.taxserviceMock.data.{AuthRecordOps, AuthRecord}
+import reactivemongo.api.bson._
+import play.api.libs.json._
+import reactivemongo.play.json.compat._
+import json2bson._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,15 +26,15 @@ class AuthRecordMongo @Inject()(val mongodb: ReactiveMongoApi) extends MongoColl
   override def create(token: AuthRecord)(implicit ec: ExecutionContext): Future[Unit] = {
     for {
       collection <- collectionF
-      r <- collection.insert(token)
+      r <- collection.insert(ordered = false).one(token)
     } yield ()
   }
 
   override def deleteExistingAndCreate(token: AuthRecord)(implicit ec: ExecutionContext): Future[Unit] = {
     for {
       coll <- collectionF
-      _ <- coll.remove(Json.obj("accessToken" -> token.accessToken))
-      _ <- coll.insert(token)
+      _ <- coll.delete().one(Json.obj("accessToken" -> token.accessToken))
+      _ <- coll.insert(ordered = false).one(token)
     } yield ()
   }
 }

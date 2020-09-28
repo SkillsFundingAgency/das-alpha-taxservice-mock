@@ -7,3 +7,7 @@ target
 /.settings
 /RUNNING_PID
 .sass-cache/
+.metals/metals.h2.db
+.metals/metals.log
+.metals/metals.lock.db
+conf/cbkeystore.keystore

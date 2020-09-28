@@ -1,8 +1,10 @@
 package uk.gov.bis.taxserviceMock.data
 
 import scala.concurrent.{ExecutionContext, Future}
+import org.joda.time.{DateTime}
 
-case class AuthRequest(scope: String, clientId: String, redirectUri: String, state: Option[String], id: Long= 0, creationDate: MongoDate = System.currentTimeMillis())
+
+case class AuthRequest(scope: String, clientId: String, redirectUri: String, state: Option[String], id: Long= 0, creationDate: DateTime = new DateTime())
 
 trait AuthRequestOps {
   /**

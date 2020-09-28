@@ -2,27 +2,27 @@ package uk.gov.bis.taxserviceMock.controllers
 
 import javax.inject.Inject
 
-import cats.data.Xor.{Left, Right}
-import cats.data.{Xor, XorT}
-import cats.instances.future._
-import cats.syntax.xor._
+import cats.data._
+import cats.implicits._
 import play.api.mvc.Controller
 import uk.gov.bis.taxserviceMock.actions.GatewayUserAction
 import uk.gov.bis.taxserviceMock.data.{AuthCodeOps, AuthCodeRow, AuthRequestOps, ScopeOps}
 import views.html.helper
+import org.joda.time.{DateTime}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class GrantScopeController @Inject()(UserAction: GatewayUserAction, auths: AuthRequestOps, authCodes: AuthCodeOps, scopes: ScopeOps)(implicit ec: ExecutionContext) extends Controller {
 
   implicit class ErrorSyntax[A](ao: Option[A]) {
-    def orError(err: String): Xor[String, A] = ao.fold[Xor[String, A]](err.left)(a => a.right)
+    def orError(err: String): Either[String, A] = ao.fold[Either[String, A]](Left(err))(a => Right(a))
   }
 
   def show(authId: Long) = UserAction.async { implicit request =>
+
     val x = for {
-      a <- XorT(auths.get(authId).map(_.orError("unknown auth id")))
-      s <- XorT(scopes.byName(a.scope).map(_.orError("unknown scope")))
+      a <- EitherT(auths.get(authId).map(_.orError("unknown auth id")))
+      s <- EitherT(scopes.byName(a.scope).map(_.orError("unknown scope")))
     } yield (a, s)
 
     x.value.flatMap {
@@ -50,7 +50,7 @@ class GrantScopeController @Inject()(UserAction: GatewayUserAction, auths: AuthR
       case None       => Future.successful(BadRequest)
       case Some(auth) =>
         val token = generateToken
-        val authCode = AuthCodeRow(token, request.user.gatewayID, "", System.currentTimeMillis(), Some(auth.scope), Some(auth.clientId), 4 * 60 * 60)
+        val authCode = AuthCodeRow(token, request.user.gatewayID, "", new DateTime(), Some(auth.scope), Some(auth.clientId), 4 * 60 * 60)
         authCodes.insert(authCode).map { _ =>
           val uri = auth.state match {
             case Some(s) => s"${auth.redirectUri}?code=${authCode.authorizationCode}&state=${helper.urlEncode(s)}"

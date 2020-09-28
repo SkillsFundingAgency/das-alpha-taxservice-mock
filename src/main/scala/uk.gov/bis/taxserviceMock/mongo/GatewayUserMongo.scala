@@ -2,15 +2,17 @@ package uk.gov.bis.taxserviceMock.mongo
 
 import javax.inject._
 
-import play.api.libs.json.Json
 import play.modules.reactivemongo._
+import reactivemongo.api.bson._
 import uk.gov.bis.taxserviceMock.data.{GatewayUser, GatewayUserOps}
+import play.api.libs.json._
+import reactivemongo.play.json.compat._
 
 import scala.concurrent.ExecutionContext
 
 class GatewayUserMongo @Inject()(val mongodb: ReactiveMongoApi) extends MongoCollection[GatewayUser] with GatewayUserOps {
 
-  implicit val userR = Json.reads[GatewayUser]
+  implicit val gatewayUserFormat = Json.format[GatewayUser]
 
   override val collectionName = "gateway_users"
 

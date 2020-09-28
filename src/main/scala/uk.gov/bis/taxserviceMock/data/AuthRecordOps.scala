@@ -1,6 +1,7 @@
 package uk.gov.bis.taxserviceMock.data
 
 import scala.concurrent.{ExecutionContext, Future}
+import org.joda.time.{DateTime}
 
 case class AuthRecord(
                        accessToken: String,
@@ -8,7 +9,7 @@ case class AuthRecord(
                        gatewayID: String,
                        scope: Option[String],
                        expiresIn: Long,
-                       createdAt: MongoDate,
+                       createdAt: DateTime,
                        clientID: String)
 
 trait AuthRecordOps {

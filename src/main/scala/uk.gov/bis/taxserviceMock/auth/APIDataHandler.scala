@@ -12,6 +12,7 @@ import uk.gov.bis.taxserviceMock.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalaoauth2.provider._
+import org.joda.time.{DateTime}
 
 case class ServiceBinding(service: String, identifierType: String, identifier: String)
 
@@ -43,26 +44,26 @@ class APIDataHandler @Inject()(applications: ClientOps, accessTokens: AuthRecord
     val accessTokenExpiresIn = 60L * 60L // 1 hour
     val refreshToken = Some(generateToken)
     val accessToken = generateToken
-    val createdAt = System.currentTimeMillis()
+    val createdAt = new DateTime()
     val tokenRow = AuthRecord(accessToken, refreshToken, authInfo.user.gatewayID, authInfo.scope, accessTokenExpiresIn, createdAt, authInfo.clientId.get)
 
     for {
       _ <- accessTokens.create(tokenRow)
-    } yield AccessToken(accessToken, refreshToken, authInfo.scope, Some(accessTokenExpiresIn), new Date(createdAt))
+    } yield AccessToken(accessToken, refreshToken, authInfo.scope, Some(accessTokenExpiresIn), createdAt.toDate())
   }
 
   override def refreshAccessToken(authInfo: AuthInfo[GatewayUser], refreshToken: String): Future[AccessToken] = {
     Logger.debug("refresh access token")
     val accessTokenExpiresIn = Some(60L * 60L) // 1 hour
     val accessToken = generateToken
-    val createdAt = System.currentTimeMillis()
+    val createdAt = new DateTime()
 
     accessTokens.forRefreshToken(refreshToken).flatMap {
       case Some(accessTokenRow) =>
         val updatedRow = accessTokenRow.copy(accessToken = accessToken, createdAt = createdAt)
         for {
           _ <- accessTokens.deleteExistingAndCreate(updatedRow)
-        } yield AccessToken(updatedRow.accessToken, Some(refreshToken), authInfo.scope, accessTokenExpiresIn, new Date(createdAt))
+        } yield AccessToken(updatedRow.accessToken, Some(refreshToken), authInfo.scope, accessTokenExpiresIn, createdAt.toDate())
       case None =>
         val s = s"Cannot find an access token entry with refresh token $refreshToken"
         Logger.warn(s)
@@ -82,14 +83,14 @@ class APIDataHandler @Inject()(applications: ClientOps, accessTokens: AuthRecord
   override def getStoredAccessToken(authInfo: AuthInfo[GatewayUser]): Future[Option[AccessToken]] = {
     Logger.debug("get stored access token using AuthInfo")
     OptionT(accessTokens.find(authInfo.user.gatewayID, authInfo.clientId)).map { token =>
-      AccessToken(token.accessToken, token.refreshToken, token.scope, Some(token.expiresIn), new Date(token.createdAt))
+      AccessToken(token.accessToken, token.refreshToken, token.scope, Some(token.expiresIn), token.createdAt.toDate())
     }
   }.value
 
   override def findAccessToken(token: String): Future[Option[AccessToken]] = {
     Logger.debug("find access token by String")
     OptionT(accessTokens.forAccessToken(token)).map { token =>
-      AccessToken(token.accessToken, token.refreshToken, token.scope, Some(token.expiresIn), new Date(token.createdAt))
+      AccessToken(token.accessToken, token.refreshToken, token.scope, Some(token.expiresIn), token.createdAt.toDate())
     }
   }.value
 
